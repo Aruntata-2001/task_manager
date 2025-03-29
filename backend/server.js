@@ -7,15 +7,26 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://your-frontend-domain.vercel.app'],
+  origin: ['http://localhost:3000', 'https://task-manager-red-mu.vercel.app'],
   credentials: true
 }));
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mern-app')
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log('MongoDB Connection Error:', err));
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('MongoDB Connected');
+  } catch (error) {
+    console.error('MongoDB Connection Error:', error);
+    process.exit(1);
+  }
+};
+
+connectDB();
 
 // Routes
 const userRoutes = require('./routes/userRoutes');
@@ -34,7 +45,7 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 }); 
