@@ -97,6 +97,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <TaskList />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/tasks" />} />
           </Routes>
         </Container>
       </Router>

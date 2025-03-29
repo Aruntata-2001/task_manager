@@ -5,11 +5,17 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors({
+// CORS Configuration
+const corsOptions = {
   origin: ['http://localhost:3000', 'https://task-manager-red-mu.vercel.app'],
-  credentials: true
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'user-id'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+// Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // MongoDB Connection
