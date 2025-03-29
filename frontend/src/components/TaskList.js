@@ -32,6 +32,8 @@ import {
 import TaskForm from './TaskForm';
 import axios from 'axios';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,7 +66,7 @@ const TaskList = () => {
         return;
       }
 
-      const response = await axios.get('http://localhost:5000/api/tasks', {
+      const response = await axios.get(`${API_BASE_URL}/api/tasks`, {
         headers: {
           'user-id': user._id
         },
@@ -76,7 +78,6 @@ const TaskList = () => {
       });
 
       setTasks(response.data);
-      // Extract unique categories
       const uniqueCategories = [...new Set(response.data.map(task => task.category))];
       setCategories(uniqueCategories);
       setLoading(false);
@@ -95,13 +96,12 @@ const TaskList = () => {
         return;
       }
 
-      await axios.patch(`http://localhost:5000/api/tasks/${taskId}/toggle`, {}, {
+      await axios.patch(`${API_BASE_URL}/api/tasks/${taskId}/toggle`, {}, {
         headers: {
           'user-id': user._id
         }
       });
 
-      // Update local state
       setTasks(tasks.map(task =>
         task._id === taskId
           ? { ...task, status: task.status === 'completed' ? 'pending' : 'completed' }
@@ -127,7 +127,7 @@ const TaskList = () => {
         return;
       }
 
-      await axios.delete(`http://localhost:5000/api/tasks/${taskToDelete._id}`, {
+      await axios.delete(`${API_BASE_URL}/api/tasks/${taskToDelete._id}`, {
         headers: {
           'user-id': user._id
         }
@@ -151,7 +151,7 @@ const TaskList = () => {
         return;
       }
 
-      const response = await axios.post('http://localhost:5000/api/tasks', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/tasks`, formData, {
         headers: {
           'user-id': user._id
         }
@@ -160,7 +160,7 @@ const TaskList = () => {
       setTasks([...tasks, response.data]);
       setFormOpen(false);
       showSnackbar('Task created successfully');
-      fetchTasks(); // Refresh the task list to update categories
+      fetchTasks();
     } catch (error) {
       console.error('Error creating task:', error);
       showSnackbar(error.response?.data?.message || 'Error creating task', 'error');
