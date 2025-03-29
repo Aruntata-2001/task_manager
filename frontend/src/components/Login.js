@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  TextField, 
-  Button, 
-  Typography, 
-  Container,
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
   Paper,
-  Link
+  Link,
+  Alert
 } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const Login = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -29,85 +31,96 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setMessage('');
+    setError('');
+    setLoading(true);
 
     try {
-      console.log('Attempting login with:', formData);
-      const response = await axios.post('http://localhost:5000/api/users/login', formData);
-      console.log('Login response:', response.data);
-
+      const response = await axios.post(`${API_BASE_URL}/api/users/login`, formData);
+      
       if (response.data && response.data.user) {
-        console.log('User data:', response.data.user);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        navigate('/dashboard');
+        navigate('/tasks');
       } else {
-        console.error('Missing user data in response:', response.data);
-        setMessage('Login failed: Server response missing user data');
+        setError('Invalid response from server');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setMessage(error.response?.data?.message || 'Error logging in');
+      setError(error.response?.data?.message || 'Login failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
-        <Typography component="h1" variant="h5" align="center" gutterBottom>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '80vh',
+        p: 2
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          maxWidth: 400,
+          width: '100%'
+        }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom align="center">
           Login
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit}>
           <TextField
-            margin="normal"
-            required
             fullWidth
-            id="email"
-            label="Email Address"
+            label="Email"
             name="email"
-            autoComplete="email"
-            autoFocus
+            type="email"
             value={formData.email}
             onChange={handleChange}
-            disabled={isLoading}
-          />
-          <TextField
             margin="normal"
             required
+          />
+          <TextField
             fullWidth
-            name="password"
             label="Password"
+            name="password"
             type="password"
-            id="password"
-            autoComplete="current-password"
             value={formData.password}
             onChange={handleChange}
-            disabled={isLoading}
+            margin="normal"
+            required
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={isLoading}
+            sx={{ mt: 3 }}
+            disabled={loading}
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Logging in...' : 'Login'}
           </Button>
-          {message && (
-            <Typography color="primary" align="center">
-              {message}
-            </Typography>
-          )}
-          <Box sx={{ textAlign: 'center' }}>
-            <Link component={RouterLink} to="/register" variant="body2">
-              Don't have an account? Sign up
+        </form>
+
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2">
+            Don't have an account?{' '}
+            <Link href="/register" underline="hover">
+              Register here
             </Link>
-          </Box>
+          </Typography>
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 };
 

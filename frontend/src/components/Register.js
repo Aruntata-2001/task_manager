@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  TextField, 
-  Button, 
-  Typography, 
-  Container,
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
   Paper,
-  Link
+  Link,
+  Alert
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const Register = () => {
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -28,93 +33,125 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setError('');
+
     if (formData.password !== formData.confirmPassword) {
-      setMessage('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
+    setLoading(true);
+
     try {
-      const response = await axios.post('http://localhost:5000/api/users/register', {
+      const response = await axios.post(`${API_BASE_URL}/api/users/register`, {
+        name: formData.name,
         email: formData.email,
         password: formData.password
       });
-      setMessage(response.data.message);
-      // Clear form after successful registration
-      setFormData({
-        email: '',
-        password: '',
-        confirmPassword: ''
-      });
+
+      if (response.data && response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        navigate('/tasks');
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error registering user');
+      console.error('Registration error:', error);
+      setError(error.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
-        <Typography component="h1" variant="h5" align="center" gutterBottom>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '80vh',
+        p: 2
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          maxWidth: 400,
+          width: '100%'
+        }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom align="center">
           Register
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit}>
           <TextField
+            fullWidth
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
             margin="normal"
             required
+          />
+          <TextField
             fullWidth
-            id="email"
-            label="Email Address"
+            label="Email"
             name="email"
-            autoComplete="email"
-            autoFocus
+            type="email"
             value={formData.email}
             onChange={handleChange}
-          />
-          <TextField
             margin="normal"
             required
+          />
+          <TextField
             fullWidth
-            name="password"
             label="Password"
+            name="password"
             type="password"
-            id="password"
-            autoComplete="new-password"
             value={formData.password}
             onChange={handleChange}
-          />
-          <TextField
             margin="normal"
             required
+          />
+          <TextField
             fullWidth
-            name="confirmPassword"
             label="Confirm Password"
+            name="confirmPassword"
             type="password"
-            id="confirmPassword"
-            autoComplete="new-password"
             value={formData.confirmPassword}
             onChange={handleChange}
+            margin="normal"
+            required
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: 3 }}
+            disabled={loading}
           >
-            Sign Up
+            {loading ? 'Registering...' : 'Register'}
           </Button>
-          {message && (
-            <Typography color="primary" align="center">
-              {message}
-            </Typography>
-          )}
-          <Box sx={{ textAlign: 'center' }}>
-            <Link component={RouterLink} to="/login" variant="body2">
-              Already have an account? Sign in
+        </form>
+
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2">
+            Already have an account?{' '}
+            <Link href="/login" underline="hover">
+              Login here
             </Link>
-          </Box>
+          </Typography>
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 };
 
